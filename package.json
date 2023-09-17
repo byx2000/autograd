@@ -1,0 +1,15 @@
+{
+  "name": "autograd",
+  "version": "1.0.0",
+  "description": "automatic gradient calculation based on computational graph",
+  "main": "./src/autograd.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [],
+  "author": "byx",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "^10.2.0"
+  }
+}
