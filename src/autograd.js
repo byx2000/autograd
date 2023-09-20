@@ -16,7 +16,7 @@ class ComputeNode {
   }
 
   forward() {
-    _forward(this, new Set())
+    forward(this)
   }
 
   backward() {
@@ -91,6 +91,13 @@ function _forward(node, visited) {
   node.value = node.eval(p)
 }
 
+function forward(...nodes) {
+  let visited = new Set()
+  for (let n of nodes) {
+    _forward(n, visited)
+  }
+}
+
 function _calculateInDegree(node, inDegree) {
   if (inDegree.has(node)) {
       return
@@ -137,5 +144,6 @@ module.exports = {
   ComputeNode, UnaryOp, BinaryOp,
   Const, Var,
   Add, Sub, Mul, Div, Pow,
-  Neg, Sin, Cos, Tan, Exp, Ln
+  Neg, Sin, Cos, Tan, Exp, Ln,
+  forward
 }
