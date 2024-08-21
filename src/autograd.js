@@ -127,18 +127,18 @@ let Add = BinaryOp((a, b) => a + b, (a, b) => [1, 1])
 let Sub = BinaryOp((a, b) => a - b, (a, b) => [1, -1])
 let Mul = BinaryOp((a, b) => a * b, (a, b) => [b, a])
 let Div = BinaryOp((a, b) => a / b, (a, b) => [1 / b, -a/(b * b)])
-let Pow = BinaryOp((a, b) => Math.pow(a, b), (a, b) => [b * Math.pow(a, b - 1), Math.log(a) * Math.pow(a, b)])
+let Pow = BinaryOp(Math.pow, (a, b) => [b * Math.pow(a, b - 1), Math.log(a) * Math.pow(a, b)])
 
 function UnaryOp(evalFunc, diffFunc) {
   return n => new ComputeNode(p => evalFunc(p[0]), p => [diffFunc(p[0])], n)
 }
 
 let Neg = UnaryOp(x => -x, x => -1)
-let Sin = UnaryOp(x => Math.sin(x), x => Math.cos(x))
-let Cos = UnaryOp(x => Math.cos(x), x => -Math.sin(x))
-let Tan = UnaryOp(x => Math.tan(x), x => 1 / (Math.cos(x) * Math.cos(x)))
-let Exp = UnaryOp(x => Math.exp(x), x => Math.exp(x))
-let Ln = UnaryOp(x => Math.log(x), x => 1 / x)
+let Sin = UnaryOp(Math.sin, Math.cos)
+let Cos = UnaryOp(Math.cos, x => -Math.sin(x))
+let Tan = UnaryOp(Math.tan, x => 1 / (Math.cos(x) * Math.cos(x)))
+let Exp = UnaryOp(Math.exp, Math.exp)
+let Ln = UnaryOp(Math.log, x => 1 / x)
 
 module.exports = {
   ComputeNode, UnaryOp, BinaryOp,
