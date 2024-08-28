@@ -7,13 +7,12 @@ Automatic gradient calculation based on computational graph, implemented backpro
 gradient calculation
 
 ```javascript
-let x = Var(5)
-let y = Var(4)
-let z = Var(7)
+let x = Var()
+let y = Var()
+let z = Var()
 let r = x.mul(y).add(z).add(x.add(y).mul(z)) // r(x, y, z) = xyz + x + y + z
 
-r.forward()
-r.backward()
+r.eval([x, y, z], [5, 4, 7])
 
 console.log(r.value) // r(5, 4, 7) = 90
 console.log(x.grad)  // dr/dx = 11

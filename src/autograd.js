@@ -6,8 +6,8 @@ class ComputeNode {
     this.grad = 0
     this.children = []
     this.parents = []
-    this.eval = evalFunc
-    this.diff = diffFunc
+    this.evalFunc = evalFunc
+    this.diffFunc = diffFunc
 
     for (let node of subNodes) {
       this.children.push(node)
@@ -46,13 +46,21 @@ class ComputeNode {
         for (let c of cur.children) {
             input.push(c.value);
         }
-        let localGrad = cur.diff(input);
+        let localGrad = cur.diffFunc(input);
 
         // 更新子节点梯度值
         for (let i = 0; i < localGrad.length; ++i) {
             cur.children[i].grad += localGrad[i] * cur.grad;
         }
     }
+  }
+
+  eval(vars, vals) {
+    for (let i = 0; i < vars.length; i++) {
+      vars[i].value = vals[i]
+    }
+    this.forward()
+    this.backward()
   }
 
   add(rhs) {
@@ -88,7 +96,7 @@ function _forward(node, visited) {
     p.push(c.value)
   }
 
-  node.value = node.eval(p)
+  node.value = node.evalFunc(p)
 }
 
 function forward(...nodes) {
@@ -123,22 +131,22 @@ function BinaryOp(evalFunc, diffFunc) {
   return (lhs, rhs) => new ComputeNode(p => evalFunc(p[0], p[1]), p => diffFunc(p[0], p[1]), lhs, rhs)
 }
 
-let Add = BinaryOp((a, b) => a + b, (a, b) => [1, 1])
-let Sub = BinaryOp((a, b) => a - b, (a, b) => [1, -1])
-let Mul = BinaryOp((a, b) => a * b, (a, b) => [b, a])
-let Div = BinaryOp((a, b) => a / b, (a, b) => [1 / b, -a/(b * b)])
-let Pow = BinaryOp(Math.pow, (a, b) => [b * Math.pow(a, b - 1), Math.log(a) * Math.pow(a, b)])
+const Add = BinaryOp((a, b) => a + b, (a, b) => [1, 1])
+const Sub = BinaryOp((a, b) => a - b, (a, b) => [1, -1])
+const Mul = BinaryOp((a, b) => a * b, (a, b) => [b, a])
+const Div = BinaryOp((a, b) => a / b, (a, b) => [1 / b, -a/(b * b)])
+const Pow = BinaryOp(Math.pow, (a, b) => [b * Math.pow(a, b - 1), Math.log(a) * Math.pow(a, b)])
 
 function UnaryOp(evalFunc, diffFunc) {
   return n => new ComputeNode(p => evalFunc(p[0]), p => [diffFunc(p[0])], n)
 }
 
-let Neg = UnaryOp(x => -x, x => -1)
-let Sin = UnaryOp(Math.sin, Math.cos)
-let Cos = UnaryOp(Math.cos, x => -Math.sin(x))
-let Tan = UnaryOp(Math.tan, x => 1 / (Math.cos(x) * Math.cos(x)))
-let Exp = UnaryOp(Math.exp, Math.exp)
-let Ln = UnaryOp(Math.log, x => 1 / x)
+const Neg = UnaryOp(x => -x, x => -1)
+const Sin = UnaryOp(Math.sin, Math.cos)
+const Cos = UnaryOp(Math.cos, x => -Math.sin(x))
+const Tan = UnaryOp(Math.tan, x => 1 / (Math.cos(x) * Math.cos(x)))
+const Exp = UnaryOp(Math.exp, Math.exp)
+const Ln = UnaryOp(Math.log, x => 1 / x)
 
 module.exports = {
   ComputeNode, UnaryOp, BinaryOp,
