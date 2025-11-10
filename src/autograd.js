@@ -1,5 +1,6 @@
 'use strict'
 
+// 计算节点
 class ComputeNode {
   constructor(evalFunc, diffFunc, ...subNodes) {
     this.value = 0
@@ -15,52 +16,8 @@ class ComputeNode {
     }
   }
 
-  forward() {
-    forward(this)
-  }
-
-  backward() {
-    let inDegree = new Map()
-    _calculateInDegree(this, inDegree)
-
-    this.grad = 1
-
-    // 按拓扑排序处理节点
-    let ready = []
-    ready.push(this)
-    while (ready.length > 0) {
-        // 获取当前节点
-        let cur = ready.shift()
-
-        // 更新节点出度，添加出度为0的节点到就绪队列
-        for (let c of cur.children) {
-            let val = inDegree.get(c);
-            inDegree.set(c, val - 1);
-            if (val === 1 && c.children.length > 0) {
-                ready.push(c);
-            }
-        }
-
-        // 计算本地梯度
-        let input = [];
-        for (let c of cur.children) {
-            input.push(c.value);
-        }
-        let localGrad = cur.diffFunc(input);
-
-        // 更新子节点梯度值
-        for (let i = 0; i < localGrad.length; ++i) {
-            cur.children[i].grad += localGrad[i] * cur.grad;
-        }
-    }
-  }
-
-  eval(vars, vals) {
-    for (let i = 0; i < vars.length; i++) {
-      vars[i].value = vals[i]
-    }
-    this.forward()
-    this.backward()
+  toComputeGraph() {
+    return new ComputeGraph(this)
   }
 
   add(rhs) {
@@ -82,38 +39,64 @@ class ComputeNode {
   pow(rhs) {
     return Pow(this, rhs)
   }
-}
 
-function _forward(node, visited) {
-  if (visited.has(node)) {
-    return
-  }
-
-  visited.add(node)
-  let p = []
-  for (let c of node.children) {
-    _forward(c, visited)
-    p.push(c.value)
-  }
-
-  node.value = node.evalFunc(p)
-}
-
-function forward(...nodes) {
-  let visited = new Set()
-  for (let n of nodes) {
-    _forward(n, visited)
+  square() {
+    return Square(this)
   }
 }
 
-function _calculateInDegree(node, inDegree) {
-  if (inDegree.has(node)) {
-      return
+// 计算图
+class ComputeGraph {
+  constructor(root) {
+    this.target = root
+    this.sortedNodes = []
+
+    // 拓扑排序
+    const ready = [root]
+    const inDegree = new Map()
+    while (ready.length > 0) {
+      const cur = ready.shift()
+      this.sortedNodes.push(cur)
+      for (const c of cur.children) {
+        let val = inDegree.get(c)
+        if (val === undefined) {
+          val = c.parents.length
+        }
+        inDegree.set(c, val - 1)
+        if (val === 1) {
+          ready.push(c)
+        }
+      }
+    }
   }
-  node.grad = 0
-  inDegree.set(node, node.parents.length)
-  for (let c of node.children) {
-    _calculateInDegree(c, inDegree)
+
+  forward() {
+    for (let i = this.sortedNodes.length - 1; i >= 0; --i) {
+      const node = this.sortedNodes[i]
+      node.value = node.evalFunc(node.children.map(c => c.value))
+    }
+  }
+
+  backward() {
+    for (const node of this.sortedNodes) {
+      node.grad = 0
+    }
+    this.sortedNodes[0].grad = 1
+
+    for (const node of this.sortedNodes) {
+      const localGrad = node.diffFunc(node.children.map(c => c.value))
+      for (let i = 0; i < node.children.length; i++) {
+        node.children[i].grad += localGrad[i] * node.grad
+      }
+    }
+  }
+
+  eval(vars, vals) {
+    for (let i = 0; i < vars.length; i++) {
+      vars[i].value = vals[i]
+    }
+    this.forward()
+    this.backward()
   }
 }
 
@@ -147,11 +130,12 @@ const Cos = UnaryOp(Math.cos, x => -Math.sin(x))
 const Tan = UnaryOp(Math.tan, x => 1 / (Math.cos(x) * Math.cos(x)))
 const Exp = UnaryOp(Math.exp, Math.exp)
 const Ln = UnaryOp(Math.log, x => 1 / x)
+const Square = UnaryOp(x => x * x, x => 2 * x)
 
-module.exports = {
-  ComputeNode, UnaryOp, BinaryOp,
+export {
+  ComputeNode, ComputeGraph,
+  UnaryOp, BinaryOp,
   Const, Var,
   Add, Sub, Mul, Div, Pow,
-  Neg, Sin, Cos, Tan, Exp, Ln,
-  forward
+  Neg, Sin, Cos, Tan, Exp, Ln, Square
 }

@@ -2,16 +2,17 @@
 
 /**
  * 训练
- * @param {*} target 目标函数
+ * @param {*} graph 计算图
  * @param {*} vars 变量
  * @param {*} optimizer 优化器
  * @param {*} endCondition 结束条件
  */
-function train(target, vars, optimizer, endCondition) {
+function train(graph, vars, optimizer, endCondition) {
   let epoch = 1
+  const target = graph.target
   while (true) {
-    target.forward()
-    target.backward()
+    graph.forward()
+    graph.backward()
     if (endCondition(epoch, target, vars)) {
       break
     }
@@ -128,7 +129,7 @@ function AdamOptimizer(lr = 0.01, beta1 = 0.9, beta2 = 0.999) {
   }
 }
 
-module.exports = {
+export {
   train, 
   SGDOptimizer, MomentumOptimizer, AdaGradOptimizer, RMSpropOptimizer, AdamOptimizer
 }
